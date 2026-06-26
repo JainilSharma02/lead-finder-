@@ -127,8 +127,23 @@ const scrapeGoogleMaps = async ({ keyword, location }) => {
         if (!data.name) continue;
 
         // 2. Click to get coordinates from URL and extra details
+        const previousUrl = page.url();
         await item.click();
-        await new Promise(r => setTimeout(r, 1200)); 
+        
+        // Wait for the URL to change to the new place to avoid getting previous item's data
+        let urlChanged = false;
+        try {
+          await page.waitForFunction(
+            (oldUrl) => document.location.href !== oldUrl,
+            { timeout: 2500 },
+            previousUrl
+          );
+          urlChanged = true;
+          // allow DOM to settle after URL change
+          await new Promise(r => setTimeout(r, 800)); 
+        } catch (e) {
+          // If URL didn't change, we still proceed but will verify the title to be safe.
+        }
 
         const currentUrl = page.url();
         let coordinates = null;
@@ -140,14 +155,31 @@ const scrapeGoogleMaps = async ({ keyword, location }) => {
             };
         }
 
-        const sidebarData = await page.evaluate(() => {
+        // To prevent data bleeding across leads, strictly verify the sidebar header
+        // matches our lead name before scraping phone numbers.
+        const sidebarData = await page.evaluate((expectedName) => {
+          const h1 = document.querySelector('h1');
+          let isMatch = false;
+          if (h1 && expectedName) {
+              const h1Text = h1.innerText.trim().toLowerCase();
+              const expText = expectedName.toLowerCase();
+              // Make sure title has significant overlap
+              if (h1Text.includes(expText) || expText.includes(h1Text)) {
+                  isMatch = true;
+              }
+          }
+
+          if (!isMatch) {
+              return { phone: null, website: null };
+          }
+
           const phoneEl = document.querySelector('button[data-item-id^="phone:tel:"]');
           const websiteEl = document.querySelector('a[data-item-id="authority"]');
           return {
             phone: phoneEl ? phoneEl.getAttribute('data-item-id').replace('phone:tel:', '').trim() : null,
             website: websiteEl ? websiteEl.href : null
           };
-        });
+        }, data.name);
         
         if (sidebarData.phone) data.phone = sidebarData.phone;
         if (sidebarData.website) data.website = sidebarData.website;
