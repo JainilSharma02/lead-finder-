@@ -16,7 +16,7 @@ const SearchPage = () => {
 
   const [keyword, setKeyword] = useState('');
   const [location, setLocation] = useState('');
-  const [platform, setPlatform] = useState('google_scrape');
+  const [platform, setPlatform] = useState('osm');
   
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -178,8 +178,9 @@ const SearchPage = () => {
                   value={platform}
                   onChange={(e) => setPlatform(e.target.value)}
                 >
-                  <option value="google">Google Maps Rapid</option>
-                  <option value="google_scrape">Google Maps Deep Scrape</option>
+                  <option value="osm">Global Intelligence (Super Fast 🚀)</option>
+                  <option value="google">Google API (Standard)</option>
+                  <option value="google_scrape">Google Deep Scrape (Slow but Detailed)</option>
                 </select>
                 <Filter className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground-muted" />
               </div>
