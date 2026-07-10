@@ -112,19 +112,7 @@ const LeadsTable = ({ leads, selectedIds, onToggleSelect, onToggleSelectAll, onO
                         </span>
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-1">
-                        <a
-                          href={`https://www.google.com/search?q=${encodeURIComponent(lead.businessName + ' ' + (lead.address || '') + ' phone number')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-xs text-primary/70 hover:text-primary transition-colors underline underline-offset-2 flex items-center gap-1"
-                        >
-                          <Phone className="h-3 w-3" />
-                          Find Number →
-                        </a>
-                        <span className="text-[10px] text-foreground-muted/50 italic">Not in OSM</span>
-                      </div>
+                      <span className="text-foreground-muted/50">—</span>
                     )}
                   </td>
                   <td className="px-4 py-4">
@@ -173,24 +161,13 @@ const LeadsTable = ({ leads, selectedIds, onToggleSelect, onToggleSelectAll, onO
                           <MapPin className="h-4 w-4" />
                         </a>
                       )}
-                      <a
-                          href={
-                            lead.whatsappNumber
-                              ? `https://wa.me/${lead.whatsappNumber}?text=${encodeURIComponent('Hello ' + lead.businessName + ', I wanted to connect with you.')}`
-                              : `https://www.google.com/search?q=${encodeURIComponent(lead.businessName + ' ' + (lead.address || '') + ' whatsapp number')}`
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className={`p-1.5 rounded-lg transition-colors flex items-center ${
-                            lead.whatsappNumber
-                              ? 'text-emerald-400 hover:bg-emerald-400/10'
-                              : 'text-foreground-muted/40 hover:bg-surface-raised hover:text-foreground-muted'
-                          }`}
-                          title={lead.whatsappNumber ? 'Open WhatsApp' : 'Search WhatsApp number on Google'}
-                        >
-                          <MessageCircle className="h-4.5 w-4.5" />
-                        </a>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onOpenWhatsApp(lead); }}
+                        className="p-1.5 rounded-lg text-emerald-400 hover:bg-emerald-400/10 transition-colors"
+                        title="Send WhatsApp Message"
+                      >
+                        <MessageCircle className="h-4.5 w-4.5" />
+                      </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); onUpdateStatus(lead._id, lead.status === 'contacted' ? 'new' : 'contacted'); }}
                         className="p-1.5 rounded-lg text-foreground-muted hover:bg-surface-raised hover:text-foreground transition-colors"
