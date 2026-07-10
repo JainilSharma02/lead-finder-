@@ -61,7 +61,7 @@ const searchOSMLeads = async ({ keyword, location }) => {
           'Content-Type': 'application/x-www-form-urlencoded',
           'User-Agent': 'LeadFinderPro/1.0'
         },
-        timeout: 4500 // 4.5s max to allow time for fallback trigger within Vercel's 10s limit
+        timeout: 1000 // 1s max to allow time for fallback trigger instantly
       });
 
       const elements = osmData.elements || [];

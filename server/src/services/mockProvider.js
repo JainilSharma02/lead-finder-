@@ -12,7 +12,6 @@ const randomPhone = () => {
 const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
 
 const searchMockPlaces = async ({ keyword, location }) => {
-  await new Promise((r) => setTimeout(r, 200));
 
   let cleanKeyword = keyword.replace(/"/g, '').trim().split(' ')[0] || keyword;
   let cleanLoc = location.trim() || 'Vadodara';
