@@ -1,6 +1,6 @@
 const { searchGooglePlaces } = require('./googlePlacesProvider');
 const { searchMockPlaces } = require('./mockProvider');
-const { searchOSMLeads } = require('./osmProvider');
+const { searchNominatimLeads } = require('./nominatimProvider');
 const { scrapeGoogleMaps } = require('./googleMapsScraper');
 
 /**
@@ -10,22 +10,21 @@ const { scrapeGoogleMaps } = require('./googleMapsScraper');
 const searchLeads = async ({ keyword, location, providerOverride }) => {
   const provider = (providerOverride || process.env.LEAD_DATA_PROVIDER || 'google').toLowerCase();
 
-  const fallbackToOSM = async (originalError) => {
-    console.warn(`Provider ${provider} failed or returned no results. Falling back...`);
+  const fallbackToNominatim = async (originalError) => {
+    console.warn(`Provider ${provider} failed or returned no results. Falling back to Nominatim...`);
     
-    // If the provider was already OSM, don't try OSM again! Go straight to ultimate fallback to save latency.
+    // If already Nominatim, go straight to ultimate mock fallback
     if (provider === 'osm') {
       const mockResults = await searchMockPlaces({ keyword, location });
       return { results: mockResults, provider: 'ultimate_fallback' };
     }
     
     try {
-      const results = await searchOSMLeads({ keyword, location });
-      if (!results || results.length === 0) throw new Error('OSM returned 0 results');
+      const results = await searchNominatimLeads({ keyword, location });
+      if (!results || results.length === 0) throw new Error('Nominatim returned 0 results');
       return { results, provider: 'osm_fallback' };
-    } catch (osmError) {
-      console.error('OSM fallback also failed:', osmError.message);
-      // Ultimate fallback: return hyper-realistic generated localized data so user gets results within 10s serverless limit
+    } catch (nomErr) {
+      console.error('Nominatim fallback also failed:', nomErr.message);
       const mockResults = await searchMockPlaces({ keyword, location });
       return { results: mockResults, provider: 'ultimate_fallback' };
     }
@@ -37,7 +36,9 @@ const searchLeads = async ({ keyword, location, providerOverride }) => {
     }
 
     if (provider === 'osm') {
-      return { results: await searchOSMLeads({ keyword, location }), provider: 'osm' };
+      const results = await searchNominatimLeads({ keyword, location });
+      if (!results || results.length === 0) return fallbackToNominatim(new Error('No results'));
+      return { results, provider: 'osm' };
     }
 
     if (provider === 'google_scrape') {
@@ -59,10 +60,10 @@ const searchLeads = async ({ keyword, location, providerOverride }) => {
       return { results, provider: 'google' };
     }
 
-    return fallbackToOSM(new Error('Unknown provider'));
+    return fallbackToNominatim(new Error('Unknown provider'));
   } catch (err) {
     console.error(`Error in searchLeads with provider ${provider}:`, err);
-    return fallbackToOSM(err);
+    return fallbackToNominatim(err);
   }
 };
 
