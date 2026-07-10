@@ -11,7 +11,7 @@ const searchSchema = new mongoose.Schema(
     keyword: { type: String, required: true, trim: true },
     location: { type: String, required: true, trim: true },
     resultCount: { type: Number, default: 0 },
-    provider: { type: String, enum: ['google', 'google_scrape', 'mock', 'osm'], default: 'google' },
+    provider: { type: String, default: 'google' },
   },
   { timestamps: true }
 );
