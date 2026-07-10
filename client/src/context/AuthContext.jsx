@@ -4,59 +4,18 @@ import { authApi } from '../api/auth';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Permanently simulated user so website operates without login
+  const [user, setUser] = useState({
+    name: 'Guest User',
+    email: 'guest@leadfinder.pro',
+  });
+  
+  const loading = false;
 
-  const loadUser = useCallback(async () => {
-    const token = localStorage.getItem('lfp_token');
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-    try {
-      const { data } = await authApi.getMe();
-      setUser(data.user);
-    } catch {
-      localStorage.removeItem('lfp_token');
-      localStorage.removeItem('lfp_user');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadUser();
-  }, [loadUser]);
-
-  const login = async (email, password) => {
-    const { data } = await authApi.login({ email, password });
-    localStorage.setItem('lfp_token', data.token);
-    localStorage.setItem('lfp_user', JSON.stringify(data.user));
-    setUser(data.user);
-    return data.user;
-  };
-
-  const register = async (name, email, password) => {
-    const { data } = await authApi.register({ name, email, password });
-    localStorage.setItem('lfp_token', data.token);
-    localStorage.setItem('lfp_user', JSON.stringify(data.user));
-    setUser(data.user);
-    return data.user;
-  };
-
-  const logout = () => {
-    localStorage.removeItem('lfp_token');
-    localStorage.removeItem('lfp_user');
-    setUser(null);
-  };
-
-  const updateUser = (patch) => {
-    setUser((prev) => {
-      const next = { ...prev, ...patch };
-      localStorage.setItem('lfp_user', JSON.stringify(next));
-      return next;
-    });
-  };
+  const login = async () => user;
+  const register = async () => user;
+  const logout = () => {};
+  const updateUser = (patch) => setUser((prev) => ({ ...prev, ...patch }));
 
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>

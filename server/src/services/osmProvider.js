@@ -1,9 +1,7 @@
 const axios = require('axios');
 
 const OVERPASS_MIRRORS = [
-  'https://overpass-api.de/api/interpreter',
-  'https://lz4.overpass-api.de/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter'
+  'https://overpass-api.de/api/interpreter' // Use a single mirror to save critical latency
 ];
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
@@ -24,17 +22,36 @@ const searchOSMLeads = async ({ keyword, location }) => {
   if (!geoRes.data.length) return [];
   const { lat, lon } = geoRes.data[0];
 
-  const escapedKeyword = keyword.replace(/"/g, '');
-  const radius = 25000;
+  let cleanKeyword = keyword.replace(/"/g, '').trim();
   
-  // Intelligent Keyword Expansion for better India-specific accuracy
-  let tagsQuery = `nwr["name"~"${escapedKeyword}",i](around:${radius},${lat},${lon});nwr["amenity"~"${escapedKeyword}",i](around:${radius},${lat},${lon});`;
+  // Intelligent Typo Correction (Hatke)
+  const typoMap = {
+    'acedmy': 'academy',
+    'academi': 'academy',
+    'tution': 'tuition',
+    'clases': 'classes',
+    'scholl': 'school',
+    'resturant': 'restaurant',
+    'hospitel': 'hospital',
+    'clinic': 'clinic'
+  };
   
-  if (escapedKeyword.toLowerCase().includes('tuition') || escapedKeyword.toLowerCase().includes('class')) {
+  Object.keys(typoMap).forEach(typo => {
+    if (cleanKeyword.toLowerCase().includes(typo)) {
+      cleanKeyword = cleanKeyword.toLowerCase().replace(typo, typoMap[typo]);
+    }
+  });
+
+  const radius = 15000; // 15km is faster scanning
+  
+  // Intelligent Keyword Expansion
+  let tagsQuery = `nwr["name"~"${cleanKeyword}",i](around:${radius},${lat},${lon});nwr["amenity"~"${cleanKeyword}",i](around:${radius},${lat},${lon});`;
+  
+  if (cleanKeyword.toLowerCase().includes('tuition') || cleanKeyword.toLowerCase().includes('class') || cleanKeyword.toLowerCase().includes('academy')) {
     tagsQuery += `nwr["amenity"="school"](around:${radius},${lat},${lon});nwr["amenity"="language_school"](around:${radius},${lat},${lon});nwr["office"="educational_institution"](around:${radius},${lat},${lon});`;
   }
   
-  const query = `[out:json][timeout:90];(${tagsQuery});out center;`;
+  const query = `[out:json][timeout:6];(${tagsQuery});out center 40;`;
 
   // 2. Try each mirror until success
   for (const mirrorUrl of OVERPASS_MIRRORS) {
@@ -44,7 +61,7 @@ const searchOSMLeads = async ({ keyword, location }) => {
           'Content-Type': 'application/x-www-form-urlencoded',
           'User-Agent': 'LeadFinderPro/1.0'
         },
-        timeout: 45000 // 45s per mirror
+        timeout: 4500 // 4.5s max to allow time for fallback trigger within Vercel's 10s limit
       });
 
       const elements = osmData.elements || [];

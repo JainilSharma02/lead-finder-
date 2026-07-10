@@ -5,7 +5,6 @@ import {
   LayoutDashboard, 
   Search, 
   Settings, 
-  LogOut, 
   Sun, 
   Moon, 
   Menu, 
@@ -26,11 +25,6 @@ const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   const NavContent = () => (
     <div className="flex flex-col h-full bg-surface border-r border-surface-border">
@@ -80,9 +74,6 @@ const DashboardLayout = ({ children }) => {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{user?.name}</p>
           </div>
-          <button onClick={handleLogout} className="text-foreground-muted hover:text-foreground transition-colors p-1">
-            <LogOut className="h-4 w-4" />
-          </button>
         </div>
       </div>
     </div>

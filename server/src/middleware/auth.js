@@ -3,22 +3,17 @@ const User = require('../models/User');
 
 const protect = async (req, res, next) => {
   try {
-    let token;
-    const authHeader = req.headers.authorization;
-
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.split(' ')[1];
-    }
-
-    if (!token) {
-      return res.status(401).json({ success: false, message: 'Not authorized, no token provided' });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-
+    // Mock user for open access (no auth barrier)
+    const mockUserId = '111111111111111111111111'; 
+    let user = await User.findById(mockUserId);
+    
     if (!user) {
-      return res.status(401).json({ success: false, message: 'User belonging to this token no longer exists' });
+      user = await User.create({
+        _id: mockUserId,
+        name: 'Guest User',
+        email: 'guest@leadfinder.pro',
+        password: 'Password123!',
+      });
     }
 
     req.user = user;
