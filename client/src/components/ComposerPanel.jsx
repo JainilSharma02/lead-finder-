@@ -25,9 +25,15 @@ const ComposerPanel = ({ leads, template, onClose, onMarkContacted, onUpdateTemp
   const phoneValid = isValidWhatsAppPhone(activePhone);
 
   const handleOpenWhatsApp = () => {
-    const url = buildWhatsAppUrl(activePhone, editedMessage);
-    window.open(url, '_blank', 'noopener,noreferrer');
-    onMarkContacted(lead._id);
+    if (activePhone && isValidWhatsAppPhone(activePhone)) {
+      const url = buildWhatsAppUrl(activePhone, editedMessage);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      onMarkContacted(lead._id);
+    } else {
+      // No number — search on Google Maps to find the correct number
+      const searchQuery = encodeURIComponent(`${lead.businessName} ${lead.address || ''} whatsapp number`);
+      window.open(`https://www.google.com/search?q=${searchQuery}`, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const goNext = () => setIndex((i) => Math.min(i + 1, leads.length - 1));
@@ -107,11 +113,16 @@ const ComposerPanel = ({ leads, template, onClose, onMarkContacted, onUpdateTemp
                   </div>
                 )}
               </div>
-              {!phoneValid && lead.phone && (
+              {!activePhone ? (
+                <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                  <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">📵 No Number in Database</p>
+                  <p className="text-[10px] text-foreground-muted mt-1">Clicking the button below will search Google to find this business's WhatsApp number.</p>
+                </div>
+              ) : !phoneValid && lead.phone ? (
                 <div className="mt-3 p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-[10px] font-bold text-red-400">
                   ⚠️ This format might be invalid for WhatsApp. Use a full country code (e.g., +91).
                 </div>
-              )}
+              ) : null}
             </div>
 
             {/* Message Editing Area */}
@@ -184,11 +195,11 @@ const ComposerPanel = ({ leads, template, onClose, onMarkContacted, onUpdateTemp
           <div className="border-t border-surface-border px-8 py-6 bg-surface">
             <button
               onClick={handleOpenWhatsApp}
-              disabled={!lead.phone}
+              disabled={false}
               className="btn-primary w-full h-14 !shadow-[0_10px_30px_rgba(34,211,216,0.2)]"
             >
               <MessageCircle className="h-5 w-5" />
-              OPEN WHATSAPP
+              {activePhone ? 'OPEN WHATSAPP' : '🔍 FIND NUMBER ON GOOGLE'}
               <ExternalLink className="h-4 w-4 ml-1 opacity-50" />
             </button>
             <div className="mt-4 flex items-center justify-center gap-2 text-[10px] font-bold text-foreground-muted uppercase tracking-widest">
